@@ -46,7 +46,7 @@ class LeadingTrailingSecondaryMask(Module):
         self.pixel_scale = Float(
             'Image scale (micrometers per pixel)',
             0.75521,
-            minval=0.0001,
+            minval=0.000001,
             doc='For every pixel the object moves, how much does it displace IRL (in micrometers)?'
         )
 
@@ -54,14 +54,14 @@ class LeadingTrailingSecondaryMask(Module):
             'Minimum displacement threshold (micrometers)',
             1.00,
             minval=0.00,
-            doc='Displacements smaller than this value are treated as noise.'
+            doc='Displacements smaller than this value are treated as noise. Minimum value is 0.'
         )
 
         self.smoothing_window = Integer(
             'Smoothing window size',
             5,
             minval=1,
-            doc='Decides how influential the past is over the new/current direction vector.'
+            doc='Decides how influential the past is over the new/current direction vector. Integer input only; minimum value is 1.'
         )
 
         self.explored_cell = None
@@ -103,8 +103,7 @@ class LeadingTrailingSecondaryMask(Module):
         for obj_id in primary_ids:
             py, px = np.where(primary_labels == obj_id)
             
-            if px.size == 0:
-                continue
+            if px.size == 0: continue
 
             current_centroid = np.array([px.mean(), py.mean()])
             migration_direction = None
@@ -131,16 +130,13 @@ class LeadingTrailingSecondaryMask(Module):
                 'last_direction': migration_direction
             }
 
-            if migration_direction is None:
-                continue
+            if migration_direction is None: continue
 
             sy, sx = np.where(secondary_labels == obj_id)
 
-            if sx.size == 0:
-                continue
+            if sx.size == 0: continue
 
-            pixel_coord = np.column_stack((sx, sy))
-            pixel_vector = pixel_coord - current_centroid
+            pixel_vector = np.column_stack((sx, sy)) - current_centroid
             proj = np.dot(pixel_vector, migration_direction) # projection of pixel vector onto migration direction unit vector
 
             front = proj >= 0

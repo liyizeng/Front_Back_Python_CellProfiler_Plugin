@@ -42,7 +42,7 @@ class LeadingTrailingHalves(Module):
         self.pixel_scale = Float(
             'Image scale (micrometers per pixel)',
             0.75521,
-            minval=0.0001,
+            minval=0.000001,
             doc='For every pixel the object moves, how much does it displace IRL (in micrometers)?'
         )
 
@@ -50,14 +50,14 @@ class LeadingTrailingHalves(Module):
             'Minimum displacement threshold (micrometers)',
             1.00,
             minval=0.00,
-            doc='Displacements smaller than this value are treated as noise.'
+            doc='Displacements smaller than this value are treated as noise. Minimum value is 0.'
         )
 
         self.smoothing_window = Integer(
             'Smoothing window size',
             5,
             minval=1,
-            doc='Decides how influential the past is over the new/current direction vector.'
+            doc='Decides how influential the past is over the new/current direction vector. Integer input only; minimum value is 1.'
         )
 
         self.explored_cell = None
@@ -95,8 +95,7 @@ class LeadingTrailingHalves(Module):
         for obj_id in object_ids:
             y, x = np.where(labels == obj_id)
 
-            if x.size == 0:
-                continue
+            if x.size == 0: continue
             
             current_centroid = np.array([x.mean(), y.mean()])
             migration_direction = None
@@ -123,11 +122,9 @@ class LeadingTrailingHalves(Module):
                 'last_direction': migration_direction
             }
 
-            if migration_direction is None:
-                continue
+            if migration_direction is None: continue
             
-            pixel_coord = np.column_stack((x, y))
-            pixel_vector = pixel_coord - current_centroid
+            pixel_vector = np.column_stack((x, y)) - current_centroid
             proj = np.dot(pixel_vector, migration_direction) # projection of pixel vector onto migration direction unit vector
             
             front = proj >= 0
